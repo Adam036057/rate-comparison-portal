@@ -233,9 +233,9 @@ elif page == "🧩 Smart Top Code Check":
                 
                 st.write(f"🔍 Unique codes in Top File: {len(top_df_unique)}")
                 
-                # ✅ FIX: Use .tolist() instead of .unique() for DataFrame columns
-                top_codes = set(top_df_unique[top_col].tolist())
-                comp_codes = set(comp_df[comp_col].unique().tolist())
+                # ✅ FIX: Convert to sets properly using .values for pandas Series
+                top_codes = set(top_df_unique[top_col].values)
+                comp_codes = set(comp_df[comp_col].unique())
 
                 found = top_codes & comp_codes
                 missing = top_codes - comp_codes
