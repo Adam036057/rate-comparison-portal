@@ -307,261 +307,203 @@ elif page == "🏢 Carrier-to-Carrier Comparison":
     
     st.markdown("---")
     st.subheader("📂 Upload Carrier Rate Files")
-    st.info("💡 Upload 2-5 carrier files to compare rates side-by-side")
     
-    # File uploaders for multiple carriers
+    # File uploaders for 2 carriers
     col1, col2 = st.columns(2)
     
     with col1:
         carrier1_file = st.file_uploader("📤 Carrier 1 File", type=["csv", "xlsx"], key="carrier1")
-        carrier2_file = st.file_uploader("📤 Carrier 2 File", type=["csv", "xlsx"], key="carrier2")
-        carrier3_file = st.file_uploader("📤 Carrier 3 File (Optional)", type=["csv", "xlsx"], key="carrier3")
     
     with col2:
-        carrier4_file = st.file_uploader("📤 Carrier 4 File (Optional)", type=["csv", "xlsx"], key="carrier4")
-        carrier5_file = st.file_uploader("📤 Carrier 5 File (Optional)", type=["csv", "xlsx"], key="carrier5")
+        carrier2_file = st.file_uploader("📤 Carrier 2 File", type=["csv", "xlsx"], key="carrier2")
     
-    # Collect uploaded files
-    carrier_files = []
-    if carrier1_file:
-        carrier_files.append(("Carrier 1", carrier1_file))
-    if carrier2_file:
-        carrier_files.append(("Carrier 2", carrier2_file))
-    if carrier3_file:
-        carrier_files.append(("Carrier 3", carrier3_file))
-    if carrier4_file:
-        carrier_files.append(("Carrier 4", carrier4_file))
-    if carrier5_file:
-        carrier_files.append(("Carrier 5", carrier5_file))
-    
-    if len(carrier_files) >= 2:
-        st.success(f"✅ {len(carrier_files)} carrier file(s) uploaded successfully!")
+    if carrier1_file and carrier2_file:
+        st.success(f"✅ 2 carrier files uploaded successfully!")
         
         try:
-            # Load all carrier dataframes
-            carrier_data = []
-            for label, file in carrier_files:
-                df = pd.read_csv(file) if file.name.endswith(".csv") else pd.read_excel(file)
-                df.columns = df.columns.str.strip()
-                carrier_data.append((label, file.name, df))
+            # Load carrier dataframes
+            carrier1_df = pd.read_csv(carrier1_file) if carrier1_file.name.endswith(".csv") else pd.read_excel(carrier1_file)
+            carrier2_df = pd.read_csv(carrier2_file) if carrier2_file.name.endswith(".csv") else pd.read_excel(carrier2_file)
+            
+            carrier1_df.columns = carrier1_df.columns.str.strip()
+            carrier2_df.columns = carrier2_df.columns.str.strip()
             
             st.markdown("---")
             st.subheader("🔧 Configure Carrier Comparison")
             
-            # Carrier Names and Column Selection
-            st.markdown("#### 📝 Name Your Carriers & Select Columns")
+            # Carrier 1 Configuration
+            with st.expander("⚙️ Configure Carrier 1", expanded=True):
+                col1, col2 = st.columns(2)
+                with col1:
+                    carrier1_name = st.text_input("Carrier 1 Name", value="Carrier 1", key="c1_name")
+                    carrier1_code_col = st.selectbox("Code/Prefix Column (Carrier 1)", carrier1_df.columns, key="c1_code")
+                with col2:
+                    st.markdown("**Select Rate Columns to Compare:**")
+                    carrier1_rate1 = st.selectbox("Rate Column 1", ["None"] + list(carrier1_df.columns), key="c1_rate1")
+                    carrier1_rate2 = st.selectbox("Rate Column 2 (Optional)", ["None"] + list(carrier1_df.columns), key="c1_rate2")
+                    carrier1_rate3 = st.selectbox("Rate Column 3 (Optional)", ["None"] + list(carrier1_df.columns), key="c1_rate3")
             
-            carrier_configs = []
-            
-            for idx, (default_label, filename, df) in enumerate(carrier_data):
-                with st.expander(f"⚙️ Configure {default_label} ({filename})", expanded=(idx == 0)):
-                    col1, col2, col3 = st.columns(3)
-                    
-                    with col1:
-                        carrier_name = st.text_input(
-                            f"Carrier Name",
-                            value=default_label,
-                            key=f"name_{idx}"
-                        )
-                    
-                    with col2:
-                        code_col = st.selectbox(
-                            "Code/Prefix Column",
-                            df.columns,
-                            key=f"code_{idx}"
-                        )
-                    
-                    with col3:
-                        rate_col = st.selectbox(
-                            "Rate Column",
-                            df.columns,
-                            key=f"rate_{idx}"
-                        )
-                    
-                    carrier_configs.append({
-                        'name': carrier_name,
-                        'code_col': code_col,
-                        'rate_col': rate_col,
-                        'df': df,
-                        'filename': filename
-                    })
+            # Carrier 2 Configuration
+            with st.expander("⚙️ Configure Carrier 2", expanded=True):
+                col1, col2 = st.columns(2)
+                with col1:
+                    carrier2_name = st.text_input("Carrier 2 Name", value="Carrier 2", key="c2_name")
+                    carrier2_code_col = st.selectbox("Code/Prefix Column (Carrier 2)", carrier2_df.columns, key="c2_code")
+                with col2:
+                    st.markdown("**Select Rate Columns to Compare:**")
+                    carrier2_rate1 = st.selectbox("Rate Column 1", ["None"] + list(carrier2_df.columns), key="c2_rate1")
+                    carrier2_rate2 = st.selectbox("Rate Column 2 (Optional)", ["None"] + list(carrier2_df.columns), key="c2_rate2")
+                    carrier2_rate3 = st.selectbox("Rate Column 3 (Optional)", ["None"] + list(carrier2_df.columns), key="c2_rate3")
             
             st.markdown("---")
             
-            if st.button("🚀 Compare All Carriers", key="compare_carriers"):
-                st.info(f"🔍 Comparing {len(carrier_configs)} carriers...")
+            if st.button("🚀 Compare Carriers", key="compare_carriers"):
+                # Collect selected rate pairs
+                rate_pairs = []
+                if carrier1_rate1 != "None" and carrier2_rate1 != "None":
+                    rate_pairs.append((carrier1_rate1, carrier2_rate1, "Rate 1"))
+                if carrier1_rate2 != "None" and carrier2_rate2 != "None":
+                    rate_pairs.append((carrier1_rate2, carrier2_rate2, "Rate 2"))
+                if carrier1_rate3 != "None" and carrier2_rate3 != "None":
+                    rate_pairs.append((carrier1_rate3, carrier2_rate3, "Rate 3"))
                 
-                # Start with first carrier
-                base_config = carrier_configs[0]
-                result_df = base_config['df'][[base_config['code_col'], base_config['rate_col']]].copy()
-                result_df.columns = ['Code', base_config['name']]
-                
-                # Convert rate to numeric
-                result_df[base_config['name']] = pd.to_numeric(result_df[base_config['name']], errors='coerce')
-                
-                # Merge with other carriers
-                for config in carrier_configs[1:]:
-                    temp_df = config['df'][[config['code_col'], config['rate_col']]].copy()
-                    temp_df.columns = ['Code', config['name']]
-                    temp_df[config['name']] = pd.to_numeric(temp_df[config['name']], errors='coerce')
+                if len(rate_pairs) == 0:
+                    st.error("❌ Please select at least one rate pair to compare.")
+                else:
+                    st.info(f"🔍 Comparing {len(rate_pairs)} rate pair(s) between {carrier1_name} and {carrier2_name}...")
                     
-                    result_df = pd.merge(
-                        result_df,
-                        temp_df,
-                        on='Code',
-                        how='inner'
-                    )
-                
-                # Remove rows with any NaN values
-                result_df = result_df.dropna()
-                
-                st.write(f"✅ Found **{len(result_df)}** common codes across all carriers")
-                
-                if len(result_df) > 0:
-                    # Get carrier columns (all except 'Code')
-                    carrier_cols = [col for col in result_df.columns if col != 'Code']
+                    # Overall Summary Data
+                    overall_carrier1_total = 0
+                    overall_carrier2_total = 0
+                    overall_codes_count = 0
                     
-                    # Find cheapest and most expensive for each code
-                    result_df['Cheapest_Carrier'] = result_df[carrier_cols].idxmin(axis=1)
-                    result_df['Min_Rate'] = result_df[carrier_cols].min(axis=1)
-                    result_df['Most_Expensive_Carrier'] = result_df[carrier_cols].idxmax(axis=1)
-                    result_df['Max_Rate'] = result_df[carrier_cols].max(axis=1)
-                    result_df['Price_Difference'] = result_df['Max_Rate'] - result_df['Min_Rate']
-                    result_df['Percentage_Difference'] = ((result_df['Max_Rate'] - result_df['Min_Rate']) / result_df['Min_Rate']) * 100
-                    
-                    # Calculate overall statistics
-                    st.markdown("---")
-                    st.markdown("### 📊 Overall Comparison Summary")
-                    
-                    # Count wins for each carrier
-                    cheapest_counts = result_df['Cheapest_Carrier'].value_counts()
-                    expensive_counts = result_df['Most_Expensive_Carrier'].value_counts()
-                    
-                    # Average rates
-                    avg_rates = result_df[carrier_cols].mean().sort_values()
-                    
-                    # Display metrics
-                    cols = st.columns(len(carrier_cols))
-                    for idx, carrier in enumerate(carrier_cols):
-                        with cols[idx]:
-                            cheapest_win_count = cheapest_counts.get(carrier, 0)
-                            expensive_count = expensive_counts.get(carrier, 0)
-                            avg_rate = avg_rates.get(carrier, 0)
+                    for c1_rate, c2_rate, rate_name in rate_pairs:
+                        st.markdown("---")
+                        st.markdown(f"### 📊 {rate_name} Comparison: `{c1_rate}` vs `{c2_rate}`")
+                        
+                        # Prepare data
+                        c1_subset = carrier1_df[[carrier1_code_col, c1_rate]].copy()
+                        c2_subset = carrier2_df[[carrier2_code_col, c2_rate]].copy()
+                        
+                        c1_subset.columns = ['Code', carrier1_name]
+                        c2_subset.columns = ['Code', carrier2_name]
+                        
+                        # Convert to numeric
+                        c1_subset[carrier1_name] = pd.to_numeric(c1_subset[carrier1_name], errors='coerce')
+                        c2_subset[carrier2_name] = pd.to_numeric(c2_subset[carrier2_name], errors='coerce')
+                        
+                        # Merge
+                        merged = pd.merge(c1_subset, c2_subset, on='Code', how='inner')
+                        merged = merged.dropna()
+                        
+                        if len(merged) > 0:
+                            # Calculate comparison columns
+                            merged['Difference'] = merged[carrier2_name] - merged[carrier1_name]
+                            merged['%_Difference'] = ((merged[carrier2_name] - merged[carrier1_name]) / merged[carrier1_name]) * 100
+                            merged['Cheapest'] = merged[[carrier1_name, carrier2_name]].idxmin(axis=1)
+                            merged['Most_Expensive'] = merged[[carrier1_name, carrier2_name]].idxmax(axis=1)
                             
-                            st.metric(
-                                label=f"🏢 {carrier}",
-                                value=f"${avg_rate:.4f}",
-                                delta=f"Cheapest: {cheapest_win_count} times"
-                            )
-                            st.caption(f"🔴 Most Expensive: {expensive_count} times")
+                            # Statistics
+                            c1_total = merged[carrier1_name].sum()
+                            c2_total = merged[carrier2_name].sum()
+                            c1_avg = merged[carrier1_name].mean()
+                            c2_avg = merged[carrier2_name].mean()
+                            
+                            # Add to overall totals
+                            overall_carrier1_total += c1_total
+                            overall_carrier2_total += c2_total
+                            overall_codes_count = len(merged)
+                            
+                            # Count wins
+                            c1_wins = (merged['Cheapest'] == carrier1_name).sum()
+                            c2_wins = (merged['Cheapest'] == carrier2_name).sum()
+                            
+                            # Display summary for this rate
+                            col1, col2, col3 = st.columns(3)
+                            
+                            with col1:
+                                st.metric(
+                                    label=f"🏢 {carrier1_name}",
+                                    value=f"${c1_avg:.4f}",
+                                    delta=f"Total: ${c1_total:.2f}"
+                                )
+                                st.caption(f"✅ Cheapest: {c1_wins} times")
+                            
+                            with col2:
+                                st.metric(
+                                    label=f"🏢 {carrier2_name}",
+                                    value=f"${c2_avg:.4f}",
+                                    delta=f"Total: ${c2_total:.2f}"
+                                )
+                                st.caption(f"✅ Cheapest: {c2_wins} times")
+                            
+                            with col3:
+                                diff = c2_total - c1_total
+                                diff_pct = ((c2_total - c1_total) / c1_total) * 100
+                                if diff > 0:
+                                    st.metric(
+                                        label="💰 Cost Difference",
+                                        value=f"${abs(diff):.2f}",
+                                        delta=f"{carrier2_name} is {abs(diff_pct):.2f}% MORE expensive"
+                                    )
+                                else:
+                                    st.metric(
+                                        label="💰 Cost Difference",
+                                        value=f"${abs(diff):.2f}",
+                                        delta=f"{carrier1_name} is {abs(diff_pct):.2f}% MORE expensive"
+                                    )
+                            
+                            st.write(f"📋 Found **{len(merged)}** common codes")
+                            
+                            # Show data table
+                            with st.expander(f"📊 View Detailed {rate_name} Data"):
+                                st.dataframe(
+                                    merged.style.format({
+                                        carrier1_name: "${:.4f}",
+                                        carrier2_name: "${:.4f}",
+                                        'Difference': "${:.4f}",
+                                        '%_Difference': "{:.2f}%"
+                                    }),
+                                    height=300
+                                )
+                        else:
+                            st.warning(f"⚠️ No common codes found for {rate_name}")
                     
+                    # Overall Summary at the end
                     st.markdown("---")
+                    st.markdown("## 🏆 OVERALL COMPARISON SUMMARY")
                     
-                    # Overall Winner
-                    overall_winner = cheapest_counts.idxmax()
-                    overall_loser = expensive_counts.idxmax()
+                    overall_diff = overall_carrier2_total - overall_carrier1_total
+                    overall_diff_pct = ((overall_carrier2_total - overall_carrier1_total) / overall_carrier1_total) * 100 if overall_carrier1_total > 0 else 0
                     
-                    col1, col2, col3 = st.columns(3)
-                    
-                    with col1:
-                        st.success(f"🏆 **Best Overall**: {overall_winner}")
-                        st.caption(f"Has cheapest rate {cheapest_counts[overall_winner]} times out of {len(result_df)}")
-                    
-                    with col2:
-                        st.error(f"💸 **Most Expensive**: {overall_loser}")
-                        st.caption(f"Has highest rate {expensive_counts[overall_loser]} times out of {len(result_df)}")
-                    
-                    with col3:
-                        avg_difference = result_df['Price_Difference'].mean()
-                        st.info(f"💰 **Avg Price Difference**: ${avg_difference:.4f}")
-                        st.caption(f"Average spread between cheapest & most expensive")
-                    
-                    st.markdown("---")
-                    st.markdown("### 📋 Detailed Comparison Results")
-                    
-                    # Sort options
-                    sort_option = st.selectbox(
-                        "Sort results by:",
-                        ["Price Difference (High to Low)", "Price Difference (Low to High)", "Code", "Percentage Difference"],
-                        key="sort_carrier"
-                    )
-                    
-                    if sort_option == "Price Difference (High to Low)":
-                        result_df = result_df.sort_values('Price_Difference', ascending=False)
-                    elif sort_option == "Price Difference (Low to High)":
-                        result_df = result_df.sort_values('Price_Difference', ascending=True)
-                    elif sort_option == "Code":
-                        result_df = result_df.sort_values('Code')
-                    elif sort_option == "Percentage Difference":
-                        result_df = result_df.sort_values('Percentage_Difference', ascending=False)
-                    
-                    # Display results with formatting
-                    st.dataframe(
-                        result_df.style.format({
-                            **{col: "${:.4f}" for col in carrier_cols},
-                            'Min_Rate': "${:.4f}",
-                            'Max_Rate': "${:.4f}",
-                            'Price_Difference': "${:.4f}",
-                            'Percentage_Difference': "{:.2f}%"
-                        }).background_gradient(subset=carrier_cols, cmap='RdYlGn_r'),
-                        height=400
-                    )
-                    
-                    st.markdown("---")
-                    st.markdown("### 📥 Download Options")
-                    
-                    # Filter options for download
                     col1, col2 = st.columns(2)
                     
                     with col1:
-                        # Download full comparison
-                        csv_full = result_df.to_csv(index=False).encode("utf-8")
-                        st.download_button(
-                            label=f"📊 Download Full Comparison ({len(result_df)} codes)",
-                            data=csv_full,
-                            file_name="carrier_comparison_full.csv",
-                            mime="text/csv"
-                        )
-                    
+                        st.markdown(f"### 💵 {carrier1_name}")
+                        st.markdown(f"**Total Cost:** `${overall_carrier1_total:.2f}`")
+                        st.markdown(f"**Number of Codes:** `{overall_codes_count}`")
+                        
                     with col2:
-                        # Download only codes with significant difference (>10%)
-                        significant_df = result_df[result_df['Percentage_Difference'] > 10].copy()
-                        csv_significant = significant_df.to_csv(index=False).encode("utf-8")
-                        st.download_button(
-                            label=f"🔥 Download Significant Differences (>{len(significant_df)} codes, >10% diff)",
-                            data=csv_significant,
-                            file_name="carrier_comparison_significant_only.csv",
-                            mime="text/csv"
-                        )
+                        st.markdown(f"### 💵 {carrier2_name}")
+                        st.markdown(f"**Total Cost:** `${overall_carrier2_total:.2f}`")
+                        st.markdown(f"**Number of Codes:** `{overall_codes_count}`")
                     
-                    # Download carrier summary
-                    summary_data = {
-                        'Carrier': carrier_cols,
-                        'Average_Rate': [avg_rates.get(c, 0) for c in carrier_cols],
-                        'Cheapest_Count': [cheapest_counts.get(c, 0) for c in carrier_cols],
-                        'Most_Expensive_Count': [expensive_counts.get(c, 0) for c in carrier_cols]
-                    }
-                    summary_df = pd.DataFrame(summary_data).sort_values('Average_Rate')
+                    st.markdown("---")
                     
-                    csv_summary = summary_df.to_csv(index=False).encode("utf-8")
-                    st.download_button(
-                        label="📈 Download Carrier Summary",
-                        data=csv_summary,
-                        file_name="carrier_summary.csv",
-                        mime="text/csv"
-                    )
+                    if overall_diff > 0:
+                        st.error(f"### 📢 {carrier2_name} is **${abs(overall_diff):.2f}** ({abs(overall_diff_pct):.2f}%) MORE EXPENSIVE than {carrier1_name}")
+                        st.success(f"### 🏆 {carrier1_name} is CHEAPER! You can save **${abs(overall_diff):.2f}** by using {carrier1_name}")
+                    elif overall_diff < 0:
+                        st.error(f"### 📢 {carrier1_name} is **${abs(overall_diff):.2f}** ({abs(overall_diff_pct):.2f}%) MORE EXPENSIVE than {carrier2_name}")
+                        st.success(f"### 🏆 {carrier2_name} is CHEAPER! You can save **${abs(overall_diff):.2f}** by using {carrier2_name}")
+                    else:
+                        st.info("### ⚖️ Both carriers have the SAME total cost!")
                     
                     st.success("✅ Carrier comparison completed successfully!")
-                    
-                else:
-                    st.warning("⚠️ No common codes found across all carriers. Please check your data.")
         
         except Exception as e:
             st.error(f"❌ Error while processing: {e}")
             st.error(f"Debug info: {str(e)}")
-    
-    elif len(carrier_files) == 1:
-        st.warning("⚠️ Please upload at least 2 carrier files to compare.")
     else:
-        st.info("👆 Upload at least 2 carrier files above to begin comparison")
+        st.info("👆 Upload 2 carrier files above to begin comparison")
 
