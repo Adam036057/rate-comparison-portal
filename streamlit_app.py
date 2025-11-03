@@ -454,52 +454,24 @@ elif page == "🏢 Carrier-to-Carrier Comparison":
                                     )
                             
                             st.write(f"📋 Found **{len(merged)}** common codes")
-                            
-                            # Show data table
-                            with st.expander(f"📊 View Detailed {rate_name} Data"):
-                                st.dataframe(
-                                    merged.style.format({
-                                        carrier1_name: "${:.4f}",
-                                        carrier2_name: "${:.4f}",
-                                        'Difference': "${:.4f}",
-                                        '%_Difference': "{:.2f}%"
-                                    }),
-                                    height=300
-                                )
                         else:
                             st.warning(f"⚠️ No common codes found for {rate_name}")
                     
-                    # Overall Summary at the end
+                    # Overall Summary - ONE LINE RESULT
                     st.markdown("---")
-                    st.markdown("## 🏆 OVERALL COMPARISON SUMMARY")
+                    st.markdown("---")
+                    st.markdown("# 🏆 RESULT")
                     
                     overall_diff = overall_carrier2_total - overall_carrier1_total
                     overall_diff_pct = ((overall_carrier2_total - overall_carrier1_total) / overall_carrier1_total) * 100 if overall_carrier1_total > 0 else 0
                     
-                    col1, col2 = st.columns(2)
-                    
-                    with col1:
-                        st.markdown(f"### 💵 {carrier1_name}")
-                        st.markdown(f"**Total Cost:** `${overall_carrier1_total:.2f}`")
-                        st.markdown(f"**Number of Codes:** `{overall_codes_count}`")
-                        
-                    with col2:
-                        st.markdown(f"### 💵 {carrier2_name}")
-                        st.markdown(f"**Total Cost:** `${overall_carrier2_total:.2f}`")
-                        st.markdown(f"**Number of Codes:** `{overall_codes_count}`")
-                    
-                    st.markdown("---")
-                    
+                    # ONE LINE RESULT
                     if overall_diff > 0:
-                        st.error(f"### 📢 {carrier2_name} is **${abs(overall_diff):.2f}** ({abs(overall_diff_pct):.2f}%) MORE EXPENSIVE than {carrier1_name}")
-                        st.success(f"### 🏆 {carrier1_name} is CHEAPER! You can save **${abs(overall_diff):.2f}** by using {carrier1_name}")
+                        st.error(f"# {carrier1_name} is ${overall_carrier1_total:,.2f} | {carrier2_name} is ${overall_carrier2_total:,.2f} | **{carrier2_name} is ${abs(overall_diff):,.2f} ({abs(overall_diff_pct):.2f}%) MORE EXPENSIVE**")
                     elif overall_diff < 0:
-                        st.error(f"### 📢 {carrier1_name} is **${abs(overall_diff):.2f}** ({abs(overall_diff_pct):.2f}%) MORE EXPENSIVE than {carrier2_name}")
-                        st.success(f"### 🏆 {carrier2_name} is CHEAPER! You can save **${abs(overall_diff):.2f}** by using {carrier2_name}")
+                        st.error(f"# {carrier1_name} is ${overall_carrier1_total:,.2f} | {carrier2_name} is ${overall_carrier2_total:,.2f} | **{carrier1_name} is ${abs(overall_diff):,.2f} ({abs(overall_diff_pct):.2f}%) MORE EXPENSIVE**")
                     else:
-                        st.info("### ⚖️ Both carriers have the SAME total cost!")
-                    
-                    st.success("✅ Carrier comparison completed successfully!")
+                        st.info(f"# {carrier1_name} is ${overall_carrier1_total:,.2f} | {carrier2_name} is ${overall_carrier2_total:,.2f} | **BOTH EQUAL**")
         
         except Exception as e:
             st.error(f"❌ Error while processing: {e}")
