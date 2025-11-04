@@ -383,8 +383,9 @@ elif page == "🏢 Carrier-to-Carrier Comparison":
                 else:
                     st.info(f"🔍 Comparing {len(rate_pairs)} rate pair(s) between {carrier1_name} and {carrier2_name}...")
                     
-                    # ✅ PAGE 1 FORMULA: Collect all percentage changes
-                    all_percentage_changes = []
+                    # ✅ MANUAL FORMULA: Collect all rates from both carriers
+                    carrier1_all_rates = []
+                    carrier2_all_rates = []
                     
                     for c1_rate, c2_rate in rate_pairs:
                         # Prepare data
@@ -403,31 +404,32 @@ elif page == "🏢 Carrier-to-Carrier Comparison":
                         merged = merged.dropna()
                         
                         if len(merged) > 0:
-                            # ✅ PAGE 1 FORMULA: ((new - old) / old) * 100
-                            merged["%_change"] = ((merged[carrier2_name] - merged[carrier1_name]) / merged[carrier1_name]) * 100
-                            
-                            # Add all percentage changes to the list
-                            all_percentage_changes.extend(merged["%_change"].tolist())
+                            # Collect all rates from both carriers
+                            carrier1_all_rates.extend(merged[carrier1_name].tolist())
+                            carrier2_all_rates.extend(merged[carrier2_name].tolist())
                     
                     # ======================================================
-                    # 🏆 SIMPLE 2-LINE RESULT
+                    # 🏆 MANUAL FORMULA RESULT
                     # ======================================================
-                    if len(all_percentage_changes) > 0:
+                    if len(carrier1_all_rates) > 0 and len(carrier2_all_rates) > 0:
                         st.markdown("---")
                         st.markdown("---")
                         st.markdown("# 🏆 RESULT")
                         
-                        # Calculate average percentage change
-                        avg_pct_change = sum(all_percentage_changes) / len(all_percentage_changes)
+                        # Calculate average rates for both carriers
+                        avg_carrier1 = sum(carrier1_all_rates) / len(carrier1_all_rates)
+                        avg_carrier2 = sum(carrier2_all_rates) / len(carrier2_all_rates)
                         
-                        # Display result - only show expensive carrier
-                        if avg_pct_change < 0:
+                        # Compare averages: which carrier is more expensive?
+                        if avg_carrier1 > avg_carrier2:
                             # Carrier1 is expensive
-                            st.error(f"## ❌ **{carrier1_name}** is **{abs(avg_pct_change):.2f}%** Expensive")
+                            diff_percent = ((avg_carrier1 - avg_carrier2) / avg_carrier2) * 100
+                            st.error(f"## ❌ **{carrier1_name}** is **{diff_percent:.2f}%** more Expensive")
                             
-                        elif avg_pct_change > 0:
+                        elif avg_carrier2 > avg_carrier1:
                             # Carrier2 is expensive
-                            st.error(f"## ❌ **{carrier2_name}** is **{abs(avg_pct_change):.2f}%** Expensive")
+                            diff_percent = ((avg_carrier2 - avg_carrier1) / avg_carrier1) * 100
+                            st.error(f"## ❌ **{carrier2_name}** is **{diff_percent:.2f}%** more Expensive")
                             
                         else:
                             # Both are equal
@@ -440,4 +442,3 @@ elif page == "🏢 Carrier-to-Carrier Comparison":
             st.error(f"Debug info: {str(e)}")
     else:
         st.info("👆 Upload 2 carrier files above to begin comparison")
-
