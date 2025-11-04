@@ -331,29 +331,40 @@ elif page == "🏢 Carrier-to-Carrier Comparison":
             st.markdown("---")
             st.subheader("🔧 Configure Carrier Comparison")
             
-            # Carrier 1 Configuration
-            with st.expander("⚙️ Configure Carrier 1", expanded=True):
-                col1, col2 = st.columns(2)
-                with col1:
-                    carrier1_name = st.text_input("Carrier 1 Name", value="Carrier 1", key="c1_name")
-                    carrier1_code_col = st.selectbox("Code/Prefix Column (Carrier 1)", carrier1_df.columns, key="c1_code")
-                with col2:
-                    st.markdown("**Select Rate Columns to Compare:**")
-                    carrier1_rate1 = st.selectbox("Rate Column 1", ["None"] + list(carrier1_df.columns), key="c1_rate1")
-                    carrier1_rate2 = st.selectbox("Rate Column 2 (Optional)", ["None"] + list(carrier1_df.columns), key="c1_rate2")
-                    carrier1_rate3 = st.selectbox("Rate Column 3 (Optional)", ["None"] + list(carrier1_df.columns), key="c1_rate3")
+            # Carrier Names
+            col1, col2 = st.columns(2)
+            with col1:
+                carrier1_name = st.text_input("Carrier 1 Name", value="Carrier 1", key="c1_name")
+            with col2:
+                carrier2_name = st.text_input("Carrier 2 Name", value="Carrier 2", key="c2_name")
             
-            # Carrier 2 Configuration
-            with st.expander("⚙️ Configure Carrier 2", expanded=True):
-                col1, col2 = st.columns(2)
-                with col1:
-                    carrier2_name = st.text_input("Carrier 2 Name", value="Carrier 2", key="c2_name")
-                    carrier2_code_col = st.selectbox("Code/Prefix Column (Carrier 2)", carrier2_df.columns, key="c2_code")
-                with col2:
-                    st.markdown("**Select Rate Columns to Compare:**")
-                    carrier2_rate1 = st.selectbox("Rate Column 1", ["None"] + list(carrier2_df.columns), key="c2_rate1")
-                    carrier2_rate2 = st.selectbox("Rate Column 2 (Optional)", ["None"] + list(carrier2_df.columns), key="c2_rate2")
-                    carrier2_rate3 = st.selectbox("Rate Column 3 (Optional)", ["None"] + list(carrier2_df.columns), key="c2_rate3")
+            st.markdown("---")
+            
+            # Code Columns
+            col1, col2 = st.columns(2)
+            with col1:
+                st.markdown(f"**🔑 {carrier1_name} - Code Column**")
+                carrier1_code_col = st.selectbox("Code/Prefix Column", carrier1_df.columns, key="c1_code")
+            with col2:
+                st.markdown(f"**🔑 {carrier2_name} - Code Column**")
+                carrier2_code_col = st.selectbox("Code/Prefix Column", carrier2_df.columns, key="c2_code")
+            
+            st.markdown("---")
+            
+            # Rate Columns - Simple naming
+            st.markdown("### 📊 Select Rate Columns to Compare")
+            
+            col1, col2 = st.columns(2)
+            with col1:
+                st.markdown(f"**{carrier1_name} - Rate Columns**")
+                carrier1_rate1 = st.selectbox("Rate Column 1", ["None"] + list(carrier1_df.columns), key="c1_rate1")
+                carrier1_rate2 = st.selectbox("Rate Column 2 (Optional)", ["None"] + list(carrier1_df.columns), key="c1_rate2")
+                carrier1_rate3 = st.selectbox("Rate Column 3 (Optional)", ["None"] + list(carrier1_df.columns), key="c1_rate3")
+            with col2:
+                st.markdown(f"**{carrier2_name} - Rate Columns**")
+                carrier2_rate1 = st.selectbox("Rate Column 1", ["None"] + list(carrier2_df.columns), key="c2_rate1")
+                carrier2_rate2 = st.selectbox("Rate Column 2 (Optional)", ["None"] + list(carrier2_df.columns), key="c2_rate2")
+                carrier2_rate3 = st.selectbox("Rate Column 3 (Optional)", ["None"] + list(carrier2_df.columns), key="c2_rate3")
             
             st.markdown("---")
             
@@ -361,21 +372,21 @@ elif page == "🏢 Carrier-to-Carrier Comparison":
                 # Collect selected rate pairs
                 rate_pairs = []
                 if carrier1_rate1 != "None" and carrier2_rate1 != "None":
-                    rate_pairs.append((carrier1_rate1, carrier2_rate1, "Rate 1"))
+                    rate_pairs.append((carrier1_rate1, carrier2_rate1))
                 if carrier1_rate2 != "None" and carrier2_rate2 != "None":
-                    rate_pairs.append((carrier1_rate2, carrier2_rate2, "Rate 2"))
+                    rate_pairs.append((carrier1_rate2, carrier2_rate2))
                 if carrier1_rate3 != "None" and carrier2_rate3 != "None":
-                    rate_pairs.append((carrier1_rate3, carrier2_rate3, "Rate 3"))
+                    rate_pairs.append((carrier1_rate3, carrier2_rate3))
                 
                 if len(rate_pairs) == 0:
                     st.error("❌ Please select at least one rate pair to compare.")
                 else:
                     st.info(f"🔍 Comparing {len(rate_pairs)} rate pair(s) between {carrier1_name} and {carrier2_name}...")
                     
-                    # ✅ SAME FORMULA AS PAGE 1: Collect all percentage changes
+                    # ✅ PAGE 1 FORMULA: Collect all percentage changes
                     all_percentage_changes = []
                     
-                    for c1_rate, c2_rate, rate_name in rate_pairs:
+                    for c1_rate, c2_rate in rate_pairs:
                         # Prepare data
                         c1_subset = carrier1_df[[carrier1_code_col, c1_rate]].copy()
                         c2_subset = carrier2_df[[carrier2_code_col, c2_rate]].copy()
@@ -392,37 +403,37 @@ elif page == "🏢 Carrier-to-Carrier Comparison":
                         merged = merged.dropna()
                         
                         if len(merged) > 0:
-                            # ✅ SAME FORMULA AS PAGE 1
-                            # Calculate percentage change: ((new - old) / old) * 100
-                            # Here: Carrier1 = baseline (old), Carrier2 = comparison (new)
+                            # ✅ PAGE 1 FORMULA: ((new - old) / old) * 100
                             merged["%_change"] = ((merged[carrier2_name] - merged[carrier1_name]) / merged[carrier1_name]) * 100
                             
-                            # Add all percentage changes to the overall list
+                            # Add all percentage changes to the list
                             all_percentage_changes.extend(merged["%_change"].tolist())
-                        else:
-                            st.warning(f"⚠️ No common codes found for {rate_name}")
                     
                     # ======================================================
-                    # 🏆 OVERALL FINAL RESULT (SINGLE RESULT ONLY)
+                    # 🏆 SIMPLE 2-LINE RESULT
                     # ======================================================
                     if len(all_percentage_changes) > 0:
                         st.markdown("---")
                         st.markdown("---")
                         st.markdown("# 🏆 RESULT")
                         
-                        # Calculate average percentage change across ALL rate types
+                        # Calculate average percentage change
                         avg_pct_change = sum(all_percentage_changes) / len(all_percentage_changes)
                         
-                        # Display the single final result
-                        if avg_pct_change > 0:
-                            # Carrier2 is more expensive (positive change)
-                            st.error(f"# 🔴 **{carrier2_name}** is **{abs(avg_pct_change):.2f}% MORE EXPENSIVE** than {carrier1_name}")
-                        elif avg_pct_change < 0:
-                            # Carrier2 is cheaper (negative change)
-                            st.success(f"# 🟢 **{carrier2_name}** is **{abs(avg_pct_change):.2f}% CHEAPER** than {carrier1_name}")
+                        # Display 2-line result
+                        if avg_pct_change < 0:
+                            # Carrier2 is cheaper
+                            st.success(f"## ✅ **{carrier2_name}** is **{abs(avg_pct_change):.2f}%** Cheaper")
+                            st.error(f"## ❌ **{carrier1_name}** is **{abs(avg_pct_change):.2f}%** Expensive")
+                            
+                        elif avg_pct_change > 0:
+                            # Carrier1 is cheaper
+                            st.success(f"## ✅ **{carrier1_name}** is **{abs(avg_pct_change):.2f}%** Cheaper")
+                            st.error(f"## ❌ **{carrier2_name}** is **{abs(avg_pct_change):.2f}%** Expensive")
+                            
                         else:
                             # Both are equal
-                            st.info(f"# ⚪ **Both carriers have EQUAL rates** (0.00% difference)")
+                            st.info(f"## ⚪ **Both carriers have EQUAL rates** (0.00% difference)")
                     else:
                         st.error("❌ No common codes found to compare across selected rate types.")
         
