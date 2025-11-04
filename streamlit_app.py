@@ -420,15 +420,13 @@ elif page == "🏢 Carrier-to-Carrier Comparison":
                         # Calculate average percentage change
                         avg_pct_change = sum(all_percentage_changes) / len(all_percentage_changes)
                         
-                        # Display 2-line result
+                        # Display result - only show expensive carrier
                         if avg_pct_change < 0:
-                            # Carrier2 is cheaper
-                            st.success(f"## ✅ **{carrier2_name}** is **{abs(avg_pct_change):.2f}%** Cheaper")
+                            # Carrier1 is expensive
                             st.error(f"## ❌ **{carrier1_name}** is **{abs(avg_pct_change):.2f}%** Expensive")
                             
                         elif avg_pct_change > 0:
-                            # Carrier1 is cheaper
-                            st.success(f"## ✅ **{carrier1_name}** is **{abs(avg_pct_change):.2f}%** Cheaper")
+                            # Carrier2 is expensive
                             st.error(f"## ❌ **{carrier2_name}** is **{abs(avg_pct_change):.2f}%** Expensive")
                             
                         else:
